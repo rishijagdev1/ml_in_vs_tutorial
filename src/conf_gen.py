@@ -9,6 +9,7 @@ from rdkit.Chem.MolStandardize import rdMolStandardize
 # controls loggin level
 log.basicConfig(level=log.DEBUG)
 
+
 def _get_conf_gen_params(num_threads):
     # this includes addtional small ring torsion potentials and
     # macrocycle ring torsion potentials and macrocycle-specific handles
@@ -27,6 +28,7 @@ def _determine_conf_num(mol):
         return 200
     else:
         return 300
+
 
 def _filter_and_sort_conformers(mol, energies, remove_unconverged):
     confs = mol.GetConformers()
@@ -51,19 +53,21 @@ def _filter_and_sort_conformers(mol, energies, remove_unconverged):
 
     return (mol, filtered_energies)
 
-def _energy_minimize(mol, max_tries = 10, remove_unconverged = True, lowest_e_only = False):
+
+def _energy_minimize(mol, max_tries=10, remove_unconverged=True, lowest_e_only=False):
     conf_num = len(mol.GetConformers())
-    not_converged =  conf_num # at the start all confs. are not converged
+    not_converged = conf_num  # at the start all confs. are not converged
     retries = 0
-    while not_converged > 0 and retries <= max_tries: # retry until all converged or
-        energies = AllChem.MMFFOptimizeMoleculeConfs(mol, numThreads=0) # this returns a tuple (not_converged_flag, energy)
+    while not_converged > 0 and retries <= max_tries:  # retry until all converged or
+        energies = AllChem.MMFFOptimizeMoleculeConfs(mol,
+                                                     numThreads=0)  # this returns a tuple (not_converged_flag, energy)
         not_converged = sum([e[0] for e in energies])
         log.debug(f"{not_converged} conformers not converged (try #{retries})")
         retries += 1
 
     mol_ordered_e, e = _filter_and_sort_conformers(mol, energies, remove_unconverged)
 
-    if lowest_e_only: # keep only one conformer, the first and lowest energy
+    if lowest_e_only:  # keep only one conformer, the first and lowest energy
         confs = mol_ordered_e.GetConformers()
         for c_idx in range(len(confs) - 1, 0, -1):
             mol_ordered_e.RemoveConformer(confs[c_idx].GetId())
@@ -71,8 +75,8 @@ def _energy_minimize(mol, max_tries = 10, remove_unconverged = True, lowest_e_on
 
     return mol_ordered_e, e
 
-def generate_conformers(smiles, lowest_e_only=True, num_threads=0):
 
+def generate_conformers(smiles, lowest_e_only=True, num_threads=0):
     # first step standardize the molecule
     std_mol = Chem.MolFromSmiles(rdMolStandardize.StandardizeSmiles(smiles))
 
@@ -84,10 +88,18 @@ def generate_conformers(smiles, lowest_e_only=True, num_threads=0):
 
     # run ETKDG (by default)
 
-    cids = AllChem.EmbedMultipleConfs(std_mol_h, conf_num, params = _get_conf_gen_params(num_threads))
+    cids = AllChem.EmbedMultipleConfs(std_mol_h, conf_num, params=_get_conf_gen_params(num_threads))
 
     # energy minimize, we need this
-    mol_e_min, e = _energy_minimize(std_mol_h, lowest_e_only = True)
+    mol_e_min, e = _energy_minimize(std_mol_h, lowest_e_only=True)
 
     return Chem.RemoveHs(mol_e_min), e
 
+
+def save(sdf_file, mol, e, precision=5):
+    w = Chem.SDWriter(sdf_file)
+    confs = mol.GetConformers()
+    for i, c in enumerate(confs):
+        mol.SetProp("e", f"{e[i]:.{precision}f}")
+        w.write(mol, confId=c.GetId())
+    w.close()
