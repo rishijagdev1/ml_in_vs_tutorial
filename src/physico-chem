@@ -69,7 +69,7 @@ print('Number of observations in the training data:', len(train))
 print('Number of observations in the test data:',len(test))
 
 
-features = df.columns[2:]
+features = df.columns[2:7]
 
 
 y = pd.factorize(train['class'])
@@ -84,7 +84,7 @@ model = clf.fit(train[features], y[0])
 
 predictions = clf.predict(test[features])
 
-clf.predict_proba(test[features])[:10]
+clf.predict_proba(test[features])
 
 preds = target_classes[predictions]
 
