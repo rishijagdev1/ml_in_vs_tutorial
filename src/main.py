@@ -33,25 +33,30 @@ suppl1a= []
 
 from sklearn.ensemble import RandomForestClassifier
 
-suppl = Chem.SmilesMolSupplier("C:/Users/1901566.admin/Desktop/JPData/MUV/712a.smi")
-suppl1 =Chem.SmilesMolSupplier("C:/Users/1901566.admin/Desktop/JPData/MUV/712d.smi")
-n = len(suppl)
-n1 = len(suppl1)
+suppl = Chem.SDMolSupplier("C:/Users/1901566.admin/Desktop/JPData/DUD-E/GPCR/AA2AR/actives_final.sdf")
+suppl1 =Chem.SDMolSupplier("C:/Users/1901566.admin/Desktop/JPData/DUD-E/GPCR/AA2AR/decoys_final.sdf")
+filter(None, suppl)
+filter(None, suppl1)
+
+print(len(suppl))
 s = Standardizer()
+
 
 for i in range(len(suppl)):
     suppla.append((suppl[i]))
 
-for i in range(len(suppl1)):
+for i in range(9000):
     suppl1a.append((suppl1[i]))
     
+n = len(suppla)
+n1 = len(suppl1a)
 
 actives = suppla[:n]
 decoys = suppl1a[:n1]
 
 mol = pd.Series(decoys + actives)
-target_classes = np.array(['ACTIVE', 'DECOY'])
-mol_labels = pd.Series(([target_classes[0]] * n) + ([target_classes[1]] * n1))
+target_classes = np.array(['DECOY', 'ACTIVE'])
+mol_labels = pd.Series(([target_classes[0]] * n1) + ([target_classes[1]] * n))
 df = pd.DataFrame()
 df['molecule'] = mol
 df['class'] = mol_labels
@@ -74,9 +79,9 @@ features = df.columns[2:7]
 
 y = pd.factorize(train['class'])
 
-#clf = RandomForestClassifier(n_estimators=100)
+clf = RandomForestClassifier(n_estimators=100)
 
-clf = GaussianNB()
+#clf = GaussianNB()
 
 
 model = clf.fit(train[features], y[0])
@@ -104,18 +109,11 @@ print(f1_score)
 numeric_preds = [1 if cls == "ACTIVE" else 0 for cls in test['class']]
 
 precision, recall, _ = precision_recall_curve(numeric_preds, predictions)
-
+c_matrix = metrics.confusion_matrix(numeric_preds, predictions)
 average_precision = average_precision_score(numeric_preds, predictions)
 print('Average precision-recall score: {0:0.2f}'.format(average_precision))
 
-plt.step(recall, precision, color='b', alpha=0.2, where='post')
-plt.fill_between(recall, precision, step='post', alpha=0.2, color='b')
 
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.ylim([0.0, 1.05])
-plt.xlim([0.0, 1.05])
-plt.title('2-class Precision-Recall curve: AP={0:0.2f}'.format(average_precision))
 
 
 
