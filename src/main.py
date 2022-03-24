@@ -4,10 +4,8 @@ Created on Mon Feb  1 09:06:59 2021
 
 @author: 1901566.admin
 """
-from sklearn import tree
-import graphviz
-from molvs import standardize
-from molvs.standardize import Standardizer
+
+
 import rdkit # compchem library
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -35,11 +33,6 @@ from sklearn.ensemble import RandomForestClassifier
 
 suppl = Chem.SDMolSupplier("C:/Users/1901566.admin/Desktop/JPData/DUD-E/GPCR/AA2AR/actives_final.sdf")
 suppl1 =Chem.SDMolSupplier("C:/Users/1901566.admin/Desktop/JPData/DUD-E/GPCR/AA2AR/decoys_final.sdf")
-filter(None, suppl)
-filter(None, suppl1)
-
-print(len(suppl))
-s = Standardizer()
 
 
 for i in range(len(suppl)):
