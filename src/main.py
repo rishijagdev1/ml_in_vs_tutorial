@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Feb  1 09:06:59 2021
-
-@author: 1901566.admin
-"""
-
-
 import rdkit # compchem library
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -16,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.naive_bayes import GaussianNB
 
-from rdkit.Chem import Draw
+
 from rdkit.Chem import Descriptors
 from rdkit.Chem.Draw import IPythonConsole # use this to draw molecules in the notebook
 from rdkit import rdBase
@@ -26,39 +18,38 @@ import pandas as pd
 import numpy as np
 
 suppla = []
-suppl1a= []
+suppld= []
 
 
 from sklearn.ensemble import RandomForestClassifier
 
-suppl = Chem.SDMolSupplier("C:/Users/1901566.admin/Desktop/JPData/DUD-E/GPCR/AA2AR/actives_final.sdf")
-suppl1 =Chem.SDMolSupplier("C:/Users/1901566.admin/Desktop/JPData/DUD-E/GPCR/AA2AR/decoys_final.sdf")
+suppl = Chem.SmilesMolSupplier("C:/Users/1901566.admin/Desktop/JPData/MUV//832a.smi")
+suppl1 =Chem.SmilesMolSupplier("C:/Users/1901566.admin/Desktop/JPData/MUV//832d.smi")
 
+Num_Decoys = 200
+Num_Actives = 20    #the ratio of actives to inactives is 1 :10
 
-for i in range(len(suppl)):
-    suppla.append((suppl[i]))
-
-for i in range(9000):
-    suppl1a.append((suppl1[i]))
+for i in range(Num_Actives):
+    suppla.append(suppl[i])
     
-n = len(suppla)
-n1 = len(suppl1a)
+for i in range(Num_Decoys):
+    suppld.append(suppl1[i])    
 
-actives = suppla[:n]
-decoys = suppl1a[:n1]
+decoys = suppld[:Num_Decoys]
+actives = suppla[:Num_Actives]
 
 mol = pd.Series(decoys + actives)
 target_classes = np.array(['DECOY', 'ACTIVE'])
-mol_labels = pd.Series(([target_classes[0]] * n1) + ([target_classes[1]] * n))
+mol_labels = pd.Series(([target_classes[0]] * Num_Decoys) + ([target_classes[1]] *Num_Actives))
 df = pd.DataFrame()
 df['molecule'] = mol
 df['class'] = mol_labels
-df['mol_weight'] = [ Descriptors.MolWt(m) for m in df['molecule'] ]
+df['mol_weight'] = [ Descriptors.MolWt(m) for m in df['molecule'] ]         #calculating molecular features and storing them in a database
 df['rot_bonds'] =  [ Descriptors.NumRotatableBonds(m) for m in df['molecule'] ]
 df['h_donors'] =   [ Descriptors.NumHDonors(m) for m in df['molecule'] ]
 df['h_acceptors'] = [ Descriptors.NumHAcceptors(m) for m in df['molecule'] ]
 df['log_p'] = [ Descriptors.MolLogP(m) for m in df['molecule'] ]
-df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
+df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75                   #separating training and test data
 
 
 train, test = df[df['is_train'] == True], df[df['is_train'] == False]
@@ -105,17 +96,3 @@ precision, recall, _ = precision_recall_curve(numeric_preds, predictions)
 c_matrix = metrics.confusion_matrix(numeric_preds, predictions)
 average_precision = average_precision_score(numeric_preds, predictions)
 print('Average precision-recall score: {0:0.2f}'.format(average_precision))
-
-
-
-
-
-'''trees =  [estimator for estimator in clf.estimators]
-single_tree = trees[0]
-
-dot_data = tree.export_graphviz(single_tree, out_file=None, 
-                         feature_names=features,  
-                         class_names=target_classes,  
-                         filled=True, rounded=True,  
-                         special_characters=True)  
-graph = graphviz.Source(dot_data)  '''
